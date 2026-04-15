@@ -57,6 +57,37 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
+// TEMPORARY - Create admin on live database (REMOVE AFTER USE)
+app.get('/api/create-live-admin', async (req, res) => {
+  try {
+    const User = (await import('./models/User.js')).default;
+    const bcrypt = await import('bcryptjs');
+    
+    // Delete existing admin
+    await User.deleteOne({ email: 'admin@library.com' });
+    
+    // Create new admin
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const admin = await User.create({
+      name: 'Super Admin',
+      email: 'admin@library.com',
+      password: hashedPassword,
+      role: 'admin'
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Admin created successfully!',
+      credentials: {
+        email: 'admin@library.com',
+        password: 'admin123'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
